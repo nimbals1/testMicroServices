@@ -24,7 +24,6 @@ node {
 	  stage 'Stage Upload To Fabric'
 	  sh "./gradlew crashlyticsUploadDistribution${flavor}Debug  -PBUILD_NUMBER=${env.BUILD_NUMBER}"
 	}
-
 	// Pulls the android flavor out of the branch name the branch is prepended with /Feature_
 	@NonCPS
 	def flavor(branchName) {
