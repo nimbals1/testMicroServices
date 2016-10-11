@@ -7,17 +7,12 @@ node {
 	  sh 'git submodule update --init'  
 	
 	  stage 'Stage Build'
+	sh 'gradle build --info'
 	
 	  //branch name from Jenkins environment variables
 	  echo "My branch is: ${env.BRANCH_NAME}"
 
 	  //build your gradle flavor, passes the current build number as a parameter to gradle
-	  sh "./gradlew 
-	// clean assemble${flavor}Debug -PBUILD_NUMBER=${env.BUILD_NUMBER}"
-	
-	 
+	  sh "./gradlew"
 	}
-	// Pulls the android flavor out of the branch name the branch is prepended with /Feature_
-	@NonCPS
-
 
