@@ -1,13 +1,14 @@
-//node {
-	  // Mark the code checkout 'stage'....
-//	  stage 'Stage Checkout'
+node {
+	  // Mark the code checkout 'stage'....	  
+	stage 'Stage Checkout'
 	
-	  // Checkout code from repository and update any submodules
-//	  checkout scm
-//	  sh 'git submodule update --init'  
+	  // Checkout code from repository and update any submodules	  checkout scm
+	  sh 'git submodule update --init'  
 	
-//	  stage 'Stage Build'
-//	sh 'gradle build --info'
+	  stage 'Stage Build'
+{
+                    sh './gradlew --console=plain --no-daemon --info --stacktrace'
+}
 	
 	
 	  //branch name from Jenkins environment variables
@@ -16,13 +17,3 @@
 	  //build your gradle flavor, passes the current build number as a parameter to gradle
 //	  sh "./gradlew"
 //	}
-
-node{
-  if(isUnix()){
-  sh 'gradle build --info'
-
-  }
-  else{
-    bat 'gradle build --info'
-  }
-}
