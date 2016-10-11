@@ -9,7 +9,7 @@ node {
 {
                     sh './gradlew --console=plain --no-daemon --info --stacktrace'
 }
-	
+}
 	
 	  //branch name from Jenkins environment variables
 //	  echo "My branch is: ${env.BRANCH_NAME}"
