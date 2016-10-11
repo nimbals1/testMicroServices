@@ -1,0 +1,163 @@
+println "Environment: ${environment}"
+buildscript {
+    ext {
+        springBootVersion = '1.4.0.RELEASE'
+        springCloudVersion = 'Brixton.SR4'
+		springDataVersion = 'Hopper-SR2'    
+		
+		if (System.properties['artifactory-user'] != "") {
+            artifactoryUser = System.properties['artifactory-user']
+        }
+        
+        if (System.properties['artifactory-password'] != "") {
+            artifactoryPassword = System.properties['artifactory-password'] 
+        }    
+    }
+    repositories {
+        if ("${environment}" == "local") {
+            maven { url "${artifactoryPluginRelease}" }
+            maven { url "${artifactoryLibsReleaseLocal}" }
+            mavenLocal()
+        } else {
+            // Configure artefactory
+        }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath('se.transmode.gradle:gradle-docker:1.2') 
+        classpath('org.jfrog.buildinfo:build-info-extractor-gradle:4.4.4')
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'spring-boot'
+apply plugin: 'maven-publish'
+apply plugin: 'docker'
+apply plugin: 'com.jfrog.artifactory'
+
+group = "${groupId}"
+version = "${version}"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    if ("${environment}" == "local") {
+        maven { url "${artifactoryPluginRelease}" }
+        maven { url "${artifactoryLibsReleaseLocal}" }
+        mavenLocal()
+    } else {
+        // Configure artefactory
+    }
+}
+
+dependencies {
+	
+	
+	compile('org.springframework.boot:spring-boot-starter-web'){
+		exclude module: 'spring-boot-starter-tomcat'
+	}
+	compile('org.springframework.boot:spring-boot-starter-undertow')
+	compile('org.springframework.boot:spring-boot-starter-ws')
+	compile('org.springframework.boot:spring-boot-starter-actuator')
+	compile('org.springframework.boot:spring-boot-starter-jersey')
+	compile('org.springframework.boot:spring-boot-starter-redis')
+	
+	compile('org.springframework.cloud:spring-cloud-starter-config')
+	compile('org.springframework.cloud:spring-cloud-starter-bus-amqp')
+	compile('org.springframework.cloud:spring-cloud-starter-eureka') {
+		exclude module: 'javax.ws.rs:jsr311-api:1.1.1'
+	}
+	compile ('org.springframework.cloud:spring-cloud-starter-sleuth')
+	compile('org.springframework.cloud:spring-cloud-starter-hystrix')
+	compile('org.springframework.cloud:spring-cloud-starter-feign')
+	compile('com.netflix.feign:feign-hystrix:8.12.1')
+	
+	compile('uk.co.britishgas.api:mod-models:4.2.1')
+	compile('uk.co.britishgas.api:mod-rs-framework:4.0.1')
+	compile('uk.co.britishgas.api:mod-ws-gen-models:1.1.0')
+	compile('uk.co.britishgas.api:mod-ws-framework:1.0.0')
+	compile('uk.co.britishgas.api:mod-cache:2.0.1')
+	compile('uk.co.britishgas.api:mod-security:1.0.0')
+	
+	compile('com.google.code.gson:gson:2.3.1')
+	compile('commons-codec:commons-codec:1.5')
+	
+	runtime files('./libs/ojdbc14.jar')
+	
+	testCompile('junit:junit:[4,)')
+	testCompile('org.powermock:powermock-module-junit4:1.6.4')
+	testCompile('org.powermock:powermock-api-mockito:1.6.4')
+	testCompile('org.springframework.boot:spring-boot-starter-test')
+}
+
+dependencyManagement {
+	imports { 
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+		mavenBom "org.springframework.data:spring-data-releasetrain:${springDataVersion}"
+	}
+}
+
+eclipse {
+    classpath {
+         containers.remove('org.eclipse.jdt.launching.JRE_CONTAINER')
+         containers 'org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8'
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.14.1'
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourceJar {
+                classifier "sources"
+            }
+        }
+    }
+}
+
+task buildDocker(type: Docker, dependsOn: build) {
+	push = true
+	applicationName = 'customers'
+	dockerfile = file('src/main/docker/Dockerfile')
+	doFirst {
+		copy {
+			from jar
+			into stageDir
+		}
+	}
+}
+
+artifactory {
+    contextUrl = "${artifactoryContextUrl}"
+    publish {
+        repository {
+            repoKey = 'libs-release-local'
+            username = "${artifactoryUser}"
+            password = "${artifactoryPassword}"
+            maven = true
+            
+        }
+        defaults {
+            publications ('mavenJava')
+        }
+    }
+    resolve {
+        repository {
+            repoKey = 'libs-release'
+            username = "${artifactoryUser}"
+            password = "${artifactoryPassword}"
+            maven = true
+        }
+    }
+}
