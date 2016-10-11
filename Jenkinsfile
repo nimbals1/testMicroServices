@@ -6,9 +6,8 @@ node {
 	  sh 'git submodule update --init'  
 	
 	  stage 'Stage Build'
-{
+
                     sh './gradlew --console=plain --no-daemon --info --stacktrace'
-}
 }
 	
 	  //branch name from Jenkins environment variables
