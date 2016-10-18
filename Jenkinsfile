@@ -1,33 +1,23 @@
+import hudson.FilePath
+import org.eclipse.jgit.transport.URIish
+
 node {
-	  // Mark the code checkout 'stage'....
-	  stage 'Stage Checkout'
-	
-	  // Checkout code from repository and update any submodules
-	  checkout scm
-	  sh 'git submodule update --init'  
-	
-	  stage 'Stage Build'
-	
-	  //branch name from Jenkins environment variables
-	  echo "My branch is: ${env.BRANCH_NAME}"
+    env.WORKSPACE = pwd()
+    stage 'Checkout'
+        checkout scm
 
-	  def flavor = flavor(env.BRANCH_NAME)
-	  echo "Building flavor ${flavor}"
+        def build = manager.build
+        def listener = manager.listener
+        def workspace = new FilePath(new File(env.WORKSPACE))
+        def environment = build.getEnvironment(listener)
+        final def project = build.getParent()
+        final def gitScm = project.getTypicalSCM()
+        final def gitClient = gitScm.createClient(listener, environment, build, workspace);
 
-	  //build your gradle flavor, passes the current build number as a parameter to gradle
-	  sh "./gradlew clean assemble${flavor}Debug -PBUILD_NUMBER=${env.BUILD_NUMBER}"
+        final def gitTagName = "TAG_NAME"
+        final def comment = "COMMENT"
+        final def remoteURI = new URIish("origin")
 
-	  stage 'Stage Archive'
-	  //tell Jenkins to archive the apks
-	  step([$class: 'ArtifactArchiver', artifacts: 'App/build/outputs/apk/*.apk', fingerprint: true])
-	
-	  stage 'Stage Upload To Fabric'
-	  sh "./gradlew crashlyticsUploadDistribution${flavor}Debug  -PBUILD_NUMBER=${env.BUILD_NUMBER}"
-	}
-	// Pulls the android flavor out of the branch name the branch is prepended with /Feature_
-	@NonCPS
-	def flavor(branchName) {
-	  def matcher = (env.BRANCH_NAME =~ /Feature_([a-z_]+)/)
-	  assert matcher.matches()
-	  matcher[0][1]
-	}
+        gitClient.tag(gitTagName, comment)
+        gitClient.push().tags(true).to(remoteURI).execute()
+}
