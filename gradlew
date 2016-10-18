@@ -5,7 +5,7 @@
 ##  Gradle start up script for UN*X
 ##
 ##############################################################################
-chmod -R 755 /Users/shilpa/.jenkins/workspace
+chmod +x gradlew
 # Attempt to set APP_HOME
 # Resolve links: $0 may be a link
 PRG="$0"
