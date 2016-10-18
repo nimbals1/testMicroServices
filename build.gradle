@@ -43,16 +43,6 @@ version = "${version}"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-repositories {
-    if ("${environment}" == "local") {
-        maven { url "${artifactoryPluginRelease}" }
-        maven { url "${artifactoryLibsReleaseLocal}" }
-        mavenLocal()
-    } else {
-        // Configure artefactory
-    }
-}
-
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter-web'){
 		exclude module: 'spring-boot-starter-tomcat'
@@ -106,7 +96,7 @@ eclipse {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.1'
+    gradleVersion = '2.14.1'
 }
 
 task sourceJar(type: Jar) {
@@ -134,30 +124,6 @@ task buildDocker(type: Docker, dependsOn: build) {
 			into stageDir
 		}
 	}
-}
-
-artifactory {
-    contextUrl = "${artifactoryContextUrl}"
-    publish {
-        repository {
-            repoKey = 'libs-release-local'
-            username = "${artifactoryUser}"
-            password = "${artifactoryPassword}"
-            maven = true
-            
-        }
-        defaults {
-            publications ('mavenJava')
-        }
-    }
-    resolve {
-        repository {
-            repoKey = 'libs-release'
-            username = "${artifactoryUser}"
-            password = "${artifactoryPassword}"
-            maven = true
-        }
-    }
 }
 
 // newly added
